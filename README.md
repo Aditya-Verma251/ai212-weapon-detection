@@ -4,5 +4,5 @@ goal: input - any image
       output - if a wepon is present or not
 
 ---
-btw if youre a developer check out workflow.md for how to do shit and sources.txt for useful links
+btw if youre a developer check out workflow.md for how to do shit.
 also does anyone know how to get users uploaded files to the backend

@@ -1,2 +1,0 @@
-https://docs.ultralytics.com/quickstart/
-https://universe.roboflow.com/test-7awfy/weapon-detection-f1lih
