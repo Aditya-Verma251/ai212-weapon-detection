@@ -17,15 +17,10 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# ---------------------------------------------------------
-# 1. RAY ACTOR DEFINITION (The Heavy Lifter)
-# ---------------------------------------------------------
 @ray.remote(num_gpus=1) # Tells Ray to assign a GPU to this worker
 class WeaponDetectorWorker:
     def __init__(self):
-        print("🧠 Ray Worker: Loading YOLO Model into GPU...")
         self.model = YOLO("models/best.pt")
-        print("✅ Ray Worker: Model Ready!")
 
     def process_image(self, image_bytes):
         # Decode the bytes into an OpenCV image
@@ -68,9 +63,7 @@ class WeaponDetectorWorker:
         out.release()
         return True # Signal that processing is done
 
-# ---------------------------------------------------------
-# 2. FASTAPI LIFECYCLE & ROUTING
-# ---------------------------------------------------------
+#FASTAPI LIFECYCLE
 TEMP_DIR = os.path.abspath("temp_files")
 os.makedirs(TEMP_DIR, exist_ok=True)
 
