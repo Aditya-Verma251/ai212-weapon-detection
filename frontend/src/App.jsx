@@ -1,124 +1,148 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useCallback } from 'react';
+import './index.css';
 
-function App() {
-  const [mode, setMode] = useState('image'); // 'image' or 'video'
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [isProcessing, setIsProcessing] = useState(false);
+const App = () => {
+  const [fileContext, setFileContext] = useState({ file: null, previewUrl: null });
+  const [uploadState, setUploadState] = useState('idle'); // idle, pending, success, error
+  const [analysisOutput, setAnalysisOutput] = useState(null);
+  const [isStreaming, setIsStreaming] = useState(false);
   
-  // Results
-  const [imageDetections, setImageDetections] = useState(null);
-  const [videoUrl, setVideoUrl] = useState(null);
-  
-  // To draw image boxes
-  const imageRef = useRef(null);
-  const canvasRef = useRef(null);
+  const fileInputRef = useRef(null);
+  const videoRef = useRef(null);
+  const streamRef = useRef(null);
 
-  const handleFileChange = (event) => {
-    setSelectedFile(event.target.files[0]);
-    setImageDetections(null);
-    setVideoUrl(null);
-  };
+  // --- Main Panel Handlers ---
+  const triggerFileSelection = () => fileInputRef.current?.click();
 
-  const handleUpload = async () => {
-    if (!selectedFile) return alert("Please select a file!");
-    setIsProcessing(true);
+  const handleSystemBrowse = useCallback((e) => {
+    const selected = e.target.files[0];
+    if (selected) {
+      const previewUrl = URL.createObjectURL(selected);
+      setFileContext({ file: selected, previewUrl });
+      setUploadState('idle');
+      setAnalysisOutput(null);
+    }
+  }, []);
 
-    const formData = new FormData();
-    formData.append('file', selectedFile);
+  const executeAnalysis = async () => {
+    if (!fileContext.file) return;
+    
+    setUploadState('pending');
+    const payload = new FormData();
+    payload.append('file', fileContext.file);
 
     try {
-      if (mode === 'image') {
-        const response = await fetch('http://localhost:8000/detect', { method: 'POST', body: formData });
-        const data = await response.json();
-        setImageDetections(data.detections);
-        drawImageBoxes(data.detections);
-      } else {
-        const response = await fetch('http://localhost:8000/video', { method: 'POST', body: formData });
-        const blob = await response.blob();
-        setVideoUrl(URL.createObjectURL(blob));
-      }
-    } catch (error) {
-      console.error("Upload error:", error);
-      alert("Error processing file.");
-    } finally {
-      setIsProcessing(false);
+      const response = await fetch('http://localhost:8000/detect', {
+        method: 'POST',
+        body: payload,
+      });
+      const data = await response.json();
+      setAnalysisOutput(data.detections || data);
+      setUploadState('success');
+    } catch (err) {
+      console.error("Analysis execution failed:", err);
+      setUploadState('error');
     }
   };
 
-  // Helper to draw boxes over the uploaded image
-  const drawImageBoxes = (detections) => {
-    const canvas = canvasRef.current;
-    const img = imageRef.current;
-    if (!canvas || !img) return;
-
-    canvas.width = img.width;
-    canvas.height = img.height;
-    const ctx = canvas.getContext("2d");
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    detections.forEach(det => {
-      const [x1, y1, x2, y2] = det.bbox;
-      ctx.strokeStyle = "#FF0000";
-      ctx.lineWidth = 3;
-      ctx.strokeRect(x1, y1, x2 - x1, y2 - y1);
-      ctx.fillStyle = "#FF0000";
-      ctx.font = "16px Arial";
-      ctx.fillText(`${det.label} (${Math.round(det.confidence * 100)}%)`, x1, y1 > 20 ? y1 - 5 : y1 + 20);
-    });
+  // --- Sidebar Handlers ---
+  const toggleMediaStream = async () => {
+    if (isStreaming) {
+      streamRef.current?.getTracks().forEach(track => track.stop());
+      if (videoRef.current) videoRef.current.srcObject = null;
+      setIsStreaming(false);
+    } else {
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        streamRef.current = stream;
+        if (videoRef.current) {
+          videoRef.current.srcObject = stream;
+          videoRef.current.play();
+        }
+        setIsStreaming(true);
+      } catch (err) {
+        console.error("Media device allocation failed:", err);
+      }
+    }
   };
 
   return (
-    <div style={{ padding: '40px', maxWidth: '800px', margin: 'auto', fontFamily: 'sans-serif' }}>
-      <h1>Weapon Detection Engine</h1>
-      
-      {/* Mode Selector */}
-      <div style={{ marginBottom: '20px' }}>
-        <button onClick={() => setMode('image')} style={{ fontWeight: mode === 'image' ? 'bold' : 'normal' }}>
-          Image Detection
-        </button>
-        <button onClick={() => setMode('video')} style={{ marginLeft: '10px', fontWeight: mode === 'video' ? 'bold' : 'normal' }}>
-          Video Detection
-        </button>
-      </div>
-
-      {/* Upload Controls */}
-      <div style={{ marginBottom: '20px' }}>
-        <input 
-          type="file" 
-          accept={mode === 'image' ? "image/*" : "video/mp4,video/*"} 
-          onChange={handleFileChange} 
-        />
-        <button onClick={handleUpload} disabled={isProcessing} style={{ marginLeft: '10px' }}>
-          {isProcessing ? "Processing in Ray Cluster..." : "Analyze"}
-        </button>
-      </div>
-
-      {/* Results View */}
-      <div style={{ marginTop: '20px', position: 'relative' }}>
-        
-        {/* Image Results */}
-        {mode === 'image' && selectedFile && !isProcessing && (
-          <div style={{ position: 'relative', display: 'inline-block' }}>
-            <img 
-              ref={imageRef} 
-              src={URL.createObjectURL(selectedFile)} 
-              alt="Upload preview" 
-              style={{ maxWidth: '100%', display: 'block' }} 
-              onLoad={() => imageDetections && drawImageBoxes(imageDetections)}
+    <div className="telemetry-dashboard">
+      <main className="primary-workspace">
+        <header className="control-node-header">
+          <div className="action-cluster">
+            <button className="btn-primary" onClick={triggerFileSelection}>
+              Browse
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+            </button>
+            <input 
+              type="file" 
+              ref={fileInputRef} 
+              onChange={handleSystemBrowse} 
+              className="hidden-directive" 
+              accept="image/*,video/*" 
             />
-            <canvas ref={canvasRef} style={{ position: 'absolute', top: 0, left: 0 }} />
+            
+            <div className={`status-indicator state-${uploadState}`} title={`Upload Status: ${uploadState}`} />
+            
+            <button 
+              className="btn-secondary" 
+              onClick={executeAnalysis}
+              disabled={!fileContext.file || uploadState === 'pending'}
+            >
+              {uploadState === 'pending' ? 'Processing...' : 'Analyse'}
+            </button>
           </div>
-        )}
+        </header>
 
-        {/* Video Results */}
-        {mode === 'video' && videoUrl && !isProcessing && (
-          <video controls width="100%" src={videoUrl}>
-            Your browser does not support the video tag.
-          </video>
-        )}
-      </div>
+        <section className="viewport-container main-output">
+          <div className="viewport-header">Static File Output</div>
+          <div className="viewport-content">
+            {fileContext.previewUrl ? (
+              <div className="media-preview-wrapper">
+                {fileContext.file.type.startsWith('video/') ? (
+                   <video src={fileContext.previewUrl} controls className="media-render" />
+                ) : (
+                   <img src={fileContext.previewUrl} alt="Target" className="media-render" />
+                )}
+                {analysisOutput && (
+                  <div className="analysis-overlay-data">
+                    <pre>{JSON.stringify(analysisOutput, null, 2)}</pre>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="placeholder-text">Awaiting file input stream...</div>
+            )}
+          </div>
+        </section>
+      </main>
+
+      <aside className="secondary-workspace">
+        <div className="camera-control-node">
+          <button className="btn-outline" onClick={toggleMediaStream}>
+            {isStreaming ? 'Disconnect Camera' : 'Connect Camera'}
+          </button>
+        </div>
+
+        <section className="viewport-container feed-output">
+          <div className="viewport-header">Live Feed Pipeline</div>
+          <div className="viewport-content video-matrix">
+            <video ref={videoRef} className="media-render live-feed" playsInline muted />
+            {!isStreaming && <div className="placeholder-text">Feed offline</div>}
+          </div>
+        </section>
+
+        <section className="viewport-container meta-output">
+          <div className="viewport-header">System About</div>
+          <div className="viewport-content text-block">
+            <p><strong>Detection Engine v2.4</strong></p>
+            <p>Awaiting payload routing to target backend. Model parameters are currently set to high-confidence threshold environments.</p>
+          </div>
+        </section>
+      </aside>
     </div>
   );
-}
+};
 
 export default App;
