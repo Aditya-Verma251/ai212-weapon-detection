@@ -30,6 +30,7 @@ function App() {
       if (mode === 'image') {
         const response = await fetch('http://localhost:8000/detect', { method: 'POST', body: formData });
         const data = await response.json();
+        console.log(data.detections);
         setImageDetections(data.detections);
         drawImageBoxes(data.detections);
       } else {

@@ -1,4 +1,4 @@
-from fastapi import FastAPI, UploadFile, File
+from fastapi import FastAPI, UploadFile, File, Response
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 from ultralytics import YOLO
@@ -30,16 +30,11 @@ class WeaponDetectorWorker:
         # Run inference
         results = self.model.predict(img, conf=0.5, verbose=False)
         
-        # Format results for the frontend
-        detections = []
-        for r in results:
-            for box in r.boxes:
-                detections.append({
-                    "bbox": box.xyxy[0].tolist(),
-                    "confidence": float(box.conf),
-                    "label": self.model.names[int(box.cls)]
-                })
-        return detections
+        annotated_frame = results[0].plot()
+        
+        # Encode back to JPEG bytes
+        _, buffer = cv2.imencode('.jpg', annotated_frame)
+        return buffer.tobytes()
 
     def process_video(self, input_path, output_path):
         cap = cv2.VideoCapture(input_path)
@@ -76,11 +71,11 @@ detector_worker = WeaponDetectorWorker.remote()
 async def detect_image(file: UploadFile = File(...)):
     image_bytes = await file.read()
     
-    # Send bytes to the Ray Actor and wait for the result
-    # ray.get() blocks the request until the remote worker finishes
-    detections = ray.get(detector_worker.process_image.remote(image_bytes))
+    # Process in Ray and get annotated image bytes back
+    annotated_image_bytes = ray.get(detector_worker.process_image.remote(image_bytes))
     
-    return {"detections": detections}
+    # Return directly as an image
+    return Response(content=annotated_image_bytes, media_type="image/jpeg")
 
 
 @app.post("/video")
