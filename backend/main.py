@@ -1,5 +1,10 @@
+<<<<<<< HEAD
 from fastapi import FastAPI, UploadFile, File, Response
 from fastapi.responses import FileResponse
+=======
+from fastapi import FastAPI, UploadFile, File, WebSocket, WebSocketDisconnect
+from fastapi.responses import FileResponse, Response
+>>>>>>> e7ddf90ae484aa62e7a51d4132e86f0e305a9bee
 from fastapi.middleware.cors import CORSMiddleware
 from ultralytics import YOLO
 import ray
@@ -57,7 +62,21 @@ class WeaponDetectorWorker:
         cap.release()
         out.release()
         return True # Signal that processing is done
+    
+    def process_stream_frame(self, image_bytes):
+        # Decode the bytes from the WebSocket into an OpenCV image
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
+        # Run inference (lower confidence slightly for live video responsiveness)
+        results = self.model.predict(img, conf=0.4, verbose=False)
+        
+        # Plot the bounding boxes onto the frame
+        annotated_frame = results[0].plot()
+        
+        # Encode the frame back to JPEG bytes to send to the frontend
+        success, buffer = cv2.imencode('.jpg', annotated_frame)
+        return buffer.tobytes()
 #FASTAPI LIFECYCLE
 TEMP_DIR = os.path.abspath("temp_files")
 os.makedirs(TEMP_DIR, exist_ok=True)
@@ -95,3 +114,19 @@ async def detect_video(file: UploadFile = File(...)):
     # 3. Cleanup the input and return the output
     os.remove(input_path)
     return FileResponse(output_path, media_type="video/mp4")
+
+@app.websocket("/ws/live")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            # 1. Wait for a frame from the React frontend
+            bytes_data = await websocket.receive_bytes()
+            
+            # 2. Send the frame to the Ray worker to be processed
+            processed_bytes = ray.get(detector_worker.process_stream_frame.remote(bytes_data))
+            
+            # 3. Send the annotated frame back to React
+            await websocket.send_bytes(processed_bytes)
+    except WebSocketDisconnect:
+        print("Live stream disconnected.")
