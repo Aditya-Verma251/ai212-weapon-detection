@@ -1,5 +1,5 @@
-from fastapi import FastAPI, UploadFile, File
-from fastapi.responses import FileResponse
+from fastapi import FastAPI, UploadFile, File, WebSocket, WebSocketDisconnect
+from fastapi.responses import FileResponse, Response
 from fastapi.middleware.cors import CORSMiddleware
 from ultralytics import YOLO
 import ray
@@ -30,16 +30,11 @@ class WeaponDetectorWorker:
         # Run inference
         results = self.model.predict(img, conf=0.5, verbose=False)
         
-        # Format results for the frontend
-        detections = []
-        for r in results:
-            for box in r.boxes:
-                detections.append({
-                    "bbox": box.xyxy[0].tolist(),
-                    "confidence": float(box.conf),
-                    "label": self.model.names[int(box.cls)]
-                })
-        return detections
+        annotated_frame = results[0].plot()
+        
+        # Encode back to JPEG bytes
+        _, buffer = cv2.imencode('.jpg', annotated_frame)
+        return buffer.tobytes()
 
     def process_video(self, input_path, output_path):
         cap = cv2.VideoCapture(input_path)
@@ -62,7 +57,21 @@ class WeaponDetectorWorker:
         cap.release()
         out.release()
         return True # Signal that processing is done
+    
+    def process_stream_frame(self, image_bytes):
+        # Decode the bytes from the WebSocket into an OpenCV image
+        nparr = np.frombuffer(image_bytes, np.uint8)
+        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
 
+        # Run inference (lower confidence slightly for live video responsiveness)
+        results = self.model.predict(img, conf=0.4, verbose=False)
+        
+        # Plot the bounding boxes onto the frame
+        annotated_frame = results[0].plot()
+        
+        # Encode the frame back to JPEG bytes to send to the frontend
+        success, buffer = cv2.imencode('.jpg', annotated_frame)
+        return buffer.tobytes()
 #FASTAPI LIFECYCLE
 TEMP_DIR = os.path.abspath("temp_files")
 os.makedirs(TEMP_DIR, exist_ok=True)
@@ -76,11 +85,11 @@ detector_worker = WeaponDetectorWorker.remote()
 async def detect_image(file: UploadFile = File(...)):
     image_bytes = await file.read()
     
-    # Send bytes to the Ray Actor and wait for the result
-    # ray.get() blocks the request until the remote worker finishes
-    detections = ray.get(detector_worker.process_image.remote(image_bytes))
+    # Process in Ray and get annotated image bytes back
+    annotated_image_bytes = ray.get(detector_worker.process_image.remote(image_bytes))
     
-    return {"detections": detections}
+    # Return directly as an image
+    return Response(content=annotated_image_bytes, media_type="image/jpeg")
 
 
 @app.post("/video")
@@ -100,3 +109,19 @@ async def detect_video(file: UploadFile = File(...)):
     # 3. Cleanup the input and return the output
     os.remove(input_path)
     return FileResponse(output_path, media_type="video/mp4")
+
+@app.websocket("/ws/live")
+async def websocket_endpoint(websocket: WebSocket):
+    await websocket.accept()
+    try:
+        while True:
+            # 1. Wait for a frame from the React frontend
+            bytes_data = await websocket.receive_bytes()
+            
+            # 2. Send the frame to the Ray worker to be processed
+            processed_bytes = ray.get(detector_worker.process_stream_frame.remote(bytes_data))
+            
+            # 3. Send the annotated frame back to React
+            await websocket.send_bytes(processed_bytes)
+    except WebSocketDisconnect:
+        print("Live stream disconnected.")

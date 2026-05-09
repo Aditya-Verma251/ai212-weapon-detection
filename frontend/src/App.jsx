@@ -3,13 +3,21 @@ import './index.css';
 
 const App = () => {
   const [fileContext, setFileContext] = useState({ file: null, previewUrl: null });
-  const [uploadState, setUploadState] = useState('idle'); // idle, pending, success, error
-  const [analysisOutput, setAnalysisOutput] = useState(null);
+  const [uploadState, setUploadState] = useState('idle');
+  const [processedVideoUrl, setProcessedVideoUrl] = useState(null);
+  const [processedImageUrl, setProcessedImageUrl] = useState(null); // Added state for processed images
+  
   const [isStreaming, setIsStreaming] = useState(false);
+  const [liveOutputUrl, setLiveOutputUrl] = useState(null);
   
   const fileInputRef = useRef(null);
+  
+  // Video and Streaming Refs
   const videoRef = useRef(null);
+  const canvasRef = useRef(null);
   const streamRef = useRef(null);
+  const wsRef = useRef(null);
+  const streamIntervalRef = useRef(null);
 
   // --- Main Panel Handlers ---
   const triggerFileSelection = () => fileInputRef.current?.click();
@@ -20,7 +28,8 @@ const App = () => {
       const previewUrl = URL.createObjectURL(selected);
       setFileContext({ file: selected, previewUrl });
       setUploadState('idle');
-      setAnalysisOutput(null);
+      setProcessedVideoUrl(null);
+      setProcessedImageUrl(null); // Reset image state on new upload
     }
   }, []);
 
@@ -31,13 +40,28 @@ const App = () => {
     const payload = new FormData();
     payload.append('file', fileContext.file);
 
+    const isVideo = fileContext.file.type.startsWith('video/');
+    const targetEndpoint = isVideo ? 'http://localhost:8000/video' : 'http://localhost:8000/detect';
+
     try {
-      const response = await fetch('http://localhost:8000/detect', {
+      const response = await fetch(targetEndpoint, {
         method: 'POST',
         body: payload,
       });
-      const data = await response.json();
-      setAnalysisOutput(data.detections || data);
+
+      if (!response.ok) throw new Error(`Server responded with status ${response.status}`);
+
+      if (isVideo) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        setProcessedVideoUrl(url);
+      } else {
+        // Fix: Now expects an image blob instead of JSON
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        setProcessedImageUrl(url);
+      }
+      
       setUploadState('success');
     } catch (err) {
       console.error("Analysis execution failed:", err);
@@ -45,21 +69,56 @@ const App = () => {
     }
   };
 
-  // --- Sidebar Handlers ---
+  // --- Sidebar Handlers (WebSocket Live Stream) ---
   const toggleMediaStream = async () => {
     if (isStreaming) {
+      clearInterval(streamIntervalRef.current);
       streamRef.current?.getTracks().forEach(track => track.stop());
       if (videoRef.current) videoRef.current.srcObject = null;
+      if (wsRef.current) wsRef.current.close();
+      
       setIsStreaming(false);
+      setLiveOutputUrl(null);
     } else {
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        const stream = await navigator.mediaDevices.getUserMedia({ video: { width: 640, height: 480 } });
         streamRef.current = stream;
+        
         if (videoRef.current) {
           videoRef.current.srcObject = stream;
           videoRef.current.play();
         }
-        setIsStreaming(true);
+
+        wsRef.current = new WebSocket('ws://localhost:8000/ws/live');
+        wsRef.current.binaryType = 'blob'; 
+        
+        wsRef.current.onmessage = (event) => {
+           setLiveOutputUrl(prevUrl => {
+              if (prevUrl) URL.revokeObjectURL(prevUrl);
+              return URL.createObjectURL(event.data);
+           });
+        };
+
+        wsRef.current.onopen = () => {
+           setIsStreaming(true);
+           
+           streamIntervalRef.current = setInterval(() => {
+               if (videoRef.current && canvasRef.current && wsRef.current.readyState === WebSocket.OPEN) {
+                   const canvas = canvasRef.current;
+                   const ctx = canvas.getContext('2d');
+                   
+                   canvas.width = videoRef.current.videoWidth || 640;
+                   canvas.height = videoRef.current.videoHeight || 480;
+                   
+                   ctx.drawImage(videoRef.current, 0, 0, canvas.width, canvas.height);
+                   
+                   canvas.toBlob((blob) => {
+                       if (blob) wsRef.current.send(blob);
+                   }, 'image/jpeg', 0.6); 
+               }
+           }, 1000 / 15); 
+        };
+
       } catch (err) {
         console.error("Media device allocation failed:", err);
       }
@@ -71,10 +130,7 @@ const App = () => {
       <main className="primary-workspace">
         <header className="control-node-header">
           <div className="action-cluster">
-            <button className="btn-primary" onClick={triggerFileSelection}>
-              Browse
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
-            </button>
+            <button className="btn-primary" onClick={triggerFileSelection}>Browse</button>
             <input 
               type="file" 
               ref={fileInputRef} 
@@ -82,9 +138,7 @@ const App = () => {
               className="hidden-directive" 
               accept="image/*,video/*" 
             />
-            
             <div className={`status-indicator state-${uploadState}`} title={`Upload Status: ${uploadState}`} />
-            
             <button 
               className="btn-secondary" 
               onClick={executeAnalysis}
@@ -101,14 +155,10 @@ const App = () => {
             {fileContext.previewUrl ? (
               <div className="media-preview-wrapper">
                 {fileContext.file.type.startsWith('video/') ? (
-                   <video src={fileContext.previewUrl} controls className="media-render" />
+                   <video src={processedVideoUrl || fileContext.previewUrl} controls className="media-render" />
                 ) : (
-                   <img src={fileContext.previewUrl} alt="Target" className="media-render" />
-                )}
-                {analysisOutput && (
-                  <div className="analysis-overlay-data">
-                    <pre>{JSON.stringify(analysisOutput, null, 2)}</pre>
-                  </div>
+                   // Fix: Now displays the processed image if it exists, otherwise the raw preview
+                   <img src={processedImageUrl || fileContext.previewUrl} alt="Target" className="media-render" />
                 )}
               </div>
             ) : (
@@ -125,21 +175,27 @@ const App = () => {
           </button>
         </div>
 
+        <canvas ref={canvasRef} style={{ display: 'none' }} />
+
         <section className="viewport-container feed-output">
-          <div className="viewport-header">Live Feed Pipeline</div>
+          <div className="viewport-header">Live Feed Pipeline (Raw)</div>
           <div className="viewport-content video-matrix">
             <video ref={videoRef} className="media-render live-feed" playsInline muted />
             {!isStreaming && <div className="placeholder-text">Feed offline</div>}
           </div>
         </section>
 
-        <section className="viewport-container meta-output">
-          <div className="viewport-header">System About</div>
-          <div className="viewport-content text-block">
-            <p><strong>Detection Engine v2.4</strong></p>
-            <p>Awaiting payload routing to target backend. Model parameters are currently set to high-confidence threshold environments.</p>
+        <section className="viewport-container feed-output">
+          <div className="viewport-header">Telemetry Output (Processed)</div>
+          <div className="viewport-content video-matrix">
+            {liveOutputUrl ? (
+              <img src={liveOutputUrl} alt="Live Telemetry" className="media-render" />
+            ) : (
+              <div className="placeholder-text">Awaiting pipeline...</div>
+            )}
           </div>
         </section>
+
       </aside>
     </div>
   );
