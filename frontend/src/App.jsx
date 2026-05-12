@@ -44,16 +44,6 @@ const App = () => {
     const targetEndpoint = isVideo ? 'http://localhost:8000/video' : 'http://localhost:8000/detect';
 
     try {
-<<<<<<< HEAD
-      if (mode === 'image') {
-        const response = await fetch('http://localhost:8000/detect', { method: 'POST', body: formData });
-        const data = await response.json();
-        console.log(data.detections);
-        setImageDetections(data.detections);
-        drawImageBoxes(data.detections);
-      } else {
-        const response = await fetch('http://localhost:8000/video', { method: 'POST', body: formData });
-=======
       const response = await fetch(targetEndpoint, {
         method: 'POST',
         body: payload,
@@ -62,7 +52,6 @@ const App = () => {
       if (!response.ok) throw new Error(`Server responded with status ${response.status}`);
 
       if (isVideo) {
->>>>>>> e7ddf90ae484aa62e7a51d4132e86f0e305a9bee
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
         setProcessedVideoUrl(url);
