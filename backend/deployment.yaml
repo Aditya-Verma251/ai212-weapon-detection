@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: weapon-detection-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: weapon-detection
+  template:
+    metadata:
+      labels:
+        app: weapon-detection
+    spec:
+      containers:
+      - name: weapon-detection
+        image: localhost:5000/weapon-detection:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8000
+        resources:
+          requests:
+            memory: "1024Mi"
+            cpu: "500m"
+          limits:
+            memory: "1024Mi"
+            cpu: "1"
+            nvidia.com/gpu: 1
