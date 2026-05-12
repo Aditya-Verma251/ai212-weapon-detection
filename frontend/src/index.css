@@ -1,13 +1,14 @@
 :root {
-  --sys-bg: #0b0f19;
-  --sys-surface: rgba(22, 27, 40, 0.7);
-  --sys-border: #2a3441;
+  /* New Color Palette Applied */
+  --sys-bg: #2A1F2D;
+  --sys-surface: #3B2C35;
+  --sys-border: #5B6C5D;
   --sys-text-primary: #e2e8f0;
-  --sys-text-muted: #64748b;
-  --sys-accent: #3b82f6;
-  --sys-accent-hover: #2563eb;
+  --sys-text-muted: #a0aec0;
+  --sys-accent: #56E39F;
+  --sys-accent-hover: #59C9A5;
   --sys-danger: #ef4444;
-  --sys-success: #10b981;
+  --sys-success: #56E39F;
   --sys-warning: #f59e0b;
   
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
@@ -16,198 +17,112 @@
   box-sizing: border-box;
 }
 
-*, *::before, *::after {
-  box-sizing: inherit;
-}
-
 body {
   margin: 0;
-  min-height: 100vh;
-  background-image: radial-gradient(circle at 50% 0%, #1e293b 0%, var(--sys-bg) 60%);
+  padding: 20px;
+  background-color: var(--sys-bg);
 }
 
-.hidden-directive {
-  display: none !important;
-}
-
-/* --- Layout Architecture --- */
+/* --- Layout Architecture (Based on Sketch) --- */
 .telemetry-dashboard {
   display: grid;
-  grid-template-columns: 2fr 1fr;
-  gap: 24px;
-  padding: 32px;
-  max-width: 1600px;
-  margin: 0 auto;
-  height: 100vh;
+  grid-template-columns: 0.8fr 1.2fr 0.8fr 1.2fr; /* Make output columns wider */
+  grid-template-rows: auto auto 1fr;
+  gap: 15px;
+  height: 95vh;
 }
 
-/* --- Main Workspace --- */
-.primary-workspace {
-  display: flex;
-  flex-direction: column;
-  gap: 24px;
-}
-
-.control-node-header .action-cluster {
-  display: flex;
-  align-items: center;
-  gap: 16px;
+.title-node {
+  grid-column: 1 / -1;
+  text-align: center;
   background: var(--sys-surface);
-  padding: 16px;
-  border-radius: 8px;
   border: 1px solid var(--sys-border);
-  backdrop-filter: blur(10px);
+  padding: 8px; /* Reduced padding */
+  font-size: 0.9rem; /* Half the current size */
+  font-weight: bold;
+  border-radius: 4px;
 }
 
-.status-indicator {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2px solid var(--sys-border);
-  transition: all 0.3s ease;
+.btn-black-text {
+  color: #000000 !important;
+  font-weight: 600;
 }
-.status-indicator.state-idle { background: var(--sys-text-muted); }
-.status-indicator.state-pending { background: var(--sys-warning); box-shadow: 0 0 10px var(--sys-warning); animation: pulse 1.5s infinite; }
-.status-indicator.state-success { background: var(--sys-success); box-shadow: 0 0 10px var(--sys-success); }
-.status-indicator.state-error { background: var(--sys-danger); box-shadow: 0 0 10px var(--sys-danger); }
 
-/* --- Secondary Workspace (Sidebar) --- */
-.secondary-workspace {
+/* Control Clusters */
+.control-section {
   display: flex;
   flex-direction: column;
-  gap: 24px;
+  gap: 10px;
 }
 
-.camera-control-node {
-  display: flex;
-  justify-content: flex-end;
-}
-
-/* --- Viewport Containers --- */
+/* Viewport Styling */
 .viewport-container {
   background: var(--sys-surface);
   border: 1px solid var(--sys-border);
-  border-radius: 8px;
+  border-radius: 4px;
   display: flex;
   flex-direction: column;
   overflow: hidden;
-  backdrop-filter: blur(10px);
 }
 
 .viewport-header {
-  padding: 12px 16px;
-  font-size: 0.85rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: var(--sys-text-muted);
+  padding: 8px 12px;
+  font-size: 0.75rem;
+  background: rgba(0,0,0,0.3);
   border-bottom: 1px solid var(--sys-border);
-  background: rgba(0, 0, 0, 0.2);
+  color: var(--sys-accent);
 }
 
 .viewport-content {
   flex: 1;
-  position: relative;
-  min-height: 200px;
   display: flex;
   align-items: center;
   justify-content: center;
+  min-height: 150px;
 }
 
-.main-output { flex: 1; }
-.feed-output { height: 400px; }
-.meta-output { min-height: 150px; }
-
-.text-block {
-  padding: 24px;
-  flex-direction: column;
-  align-items: flex-start;
-  justify-content: flex-start;
-  font-size: 0.9rem;
-  line-height: 1.6;
+/* Shrink Raw Input/Video views */
+.small-view {
+  max-height: 200px; /* Limits the height of raw previews */
 }
 
-/* --- Media Rendering --- */
-.media-preview-wrapper {
-  position: relative;
-  width: 100%;
+/* Ensure Output views take up the remaining vertical space */
+.expanded-view {
+  grid-row: 3;
   height: 100%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16px;
 }
 
+/* Specific Grid Mapping */
+.raw-input-view { grid-column: 2; }
+.raw-live-view { grid-column: 4; }
+.backend-output-large { grid-column: 1 / 3; }
+.live-telemetry-large { grid-column: 3 / 5; }
+
+/* Keep browse and camera buttons centered in their small rows */
+.browse-analyze-controls, .camera-toggle-node {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+/* Elements */
 .media-render {
   max-width: 100%;
   max-height: 100%;
-  border-radius: 4px;
   object-fit: contain;
 }
 
-.media-render.live-feed {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  background: #000;
-}
-
-.analysis-overlay-data {
-  position: absolute;
-  bottom: 16px;
-  left: 16px;
-  right: 16px;
-  background: rgba(0, 0, 0, 0.8);
-  border: 1px solid var(--sys-border);
-  padding: 16px;
-  border-radius: 6px;
-  max-height: 40%;
-  overflow-y: auto;
-  font-family: ui-monospace, monospace;
-  font-size: 0.8rem;
-}
-
-.placeholder-text {
-  color: var(--sys-text-muted);
-  font-style: italic;
-}
-
-/* --- Buttons --- */
-button {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 20px;
-  font-family: inherit;
-  font-size: 0.9rem;
-  font-weight: 500;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-  border: none;
-}
-
-.btn-primary {
-  background: var(--sys-accent);
-  color: white;
-}
+.btn-primary { background: var(--sys-accent); color: #2A1F2D; font-weight: bold; }
 .btn-primary:hover { background: var(--sys-accent-hover); }
+.btn-outline { border: 1px solid var(--sys-accent); color: var(--sys-accent); }
 
-.btn-secondary {
-  background: var(--sys-border);
-  color: var(--sys-text-primary);
+.status-indicator {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  display: inline-block;
+  margin-right: 8px;
 }
-.btn-secondary:hover:not(:disabled) { background: #3a4556; }
-.btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
-
-.btn-outline {
-  background: transparent;
-  border: 1px solid var(--sys-accent);
-  color: var(--sys-accent);
-}
-.btn-outline:hover { background: rgba(59, 130, 246, 0.1); }
-
-@keyframes pulse {
-  0% { opacity: 1; }
-  50% { opacity: 0.5; }
-  100% { opacity: 1; }
-}
+.state-idle { background: var(--sys-border); }
+.state-pending { background: var(--sys-warning); }
+.state-success { background: var(--sys-success); }

@@ -127,76 +127,80 @@ const App = () => {
 
   return (
     <div className="telemetry-dashboard">
-      <main className="primary-workspace">
-        <header className="control-node-header">
-          <div className="action-cluster">
-            <button className="btn-primary" onClick={triggerFileSelection}>Browse</button>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleSystemBrowse} 
-              className="hidden-directive" 
-              accept="image/*,video/*" 
-            />
-            <div className={`status-indicator state-${uploadState}`} title={`Upload Status: ${uploadState}`} />
-            <button 
-              className="btn-secondary" 
-              onClick={executeAnalysis}
-              disabled={!fileContext.file || uploadState === 'pending'}
-            >
-              {uploadState === 'pending' ? 'Processing...' : 'Analyse'}
-            </button>
-          </div>
-        </header>
+      <header className="title-node">AI212 Project : Weapon Detection System</header>
 
-        <section className="viewport-container main-output">
-          <div className="viewport-header">Static File Output</div>
-          <div className="viewport-content">
-            {fileContext.previewUrl ? (
-              <div className="media-preview-wrapper">
-                {fileContext.file.type.startsWith('video/') ? (
-                   <video src={processedVideoUrl || fileContext.previewUrl} controls className="media-render" />
-                ) : (
-                   // Fix: Now displays the processed image if it exists, otherwise the raw preview
-                   <img src={processedImageUrl || fileContext.previewUrl} alt="Target" className="media-render" />
-                )}
-              </div>
-            ) : (
-              <div className="placeholder-text">Awaiting file input stream...</div>
-            )}
-          </div>
-        </section>
-      </main>
-
-      <aside className="secondary-workspace">
-        <div className="camera-control-node">
-          <button className="btn-outline" onClick={toggleMediaStream}>
-            {isStreaming ? 'Disconnect Camera' : 'Connect Camera'}
+      {/* Section: Browse & Analyse */}
+      <div className="control-section browse-analyze-controls">
+        <button className="btn-primary" onClick={triggerFileSelection}>Browse ↑</button>
+        {/* Hidden input to remove "No file chosen" text */}
+        <input 
+          type="file" 
+          ref={fileInputRef} 
+          onChange={handleSystemBrowse} 
+          style={{ display: 'none' }} 
+          accept="image/*,video/*" 
+        />
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginTop: '10px' }}>
+          <div className={`status-indicator state-${uploadState}`} />
+          <button 
+            className="btn-outline btn-black-text" 
+            onClick={executeAnalysis}
+            disabled={!fileContext.file || uploadState === 'pending'}
+          >
+            {uploadState === 'pending' ? '...' : 'Analyse'}
           </button>
         </div>
+      </div>
 
-        <canvas ref={canvasRef} style={{ display: 'none' }} />
+      {/* Section: Raw Input Preview (Half Width) */}
+      <section className="viewport-container raw-input-view small-view">
+        <div className="viewport-header">Raw Input</div>
+        <div className="viewport-content">
+          {fileContext.previewUrl ? (
+            <img src={fileContext.previewUrl} className="media-render" alt="Preview" />
+          ) : <span className="placeholder-text">No File</span>}
+        </div>
+      </section>
 
-        <section className="viewport-container feed-output">
-          <div className="viewport-header">Live Feed Pipeline (Raw)</div>
-          <div className="viewport-content video-matrix">
-            <video ref={videoRef} className="media-render live-feed" playsInline muted />
-            {!isStreaming && <div className="placeholder-text">Feed offline</div>}
-          </div>
-        </section>
+      {/* Section: Camera Connection */}
+      <div className="camera-toggle-node">
+        <button className="btn-outline btn-black-text" onClick={toggleMediaStream}>
+          {isStreaming ? 'Disconnect' : 'Connect Camera'}
+        </button>
+      </div>
 
-        <section className="viewport-container feed-output">
-          <div className="viewport-header">Telemetry Output (Processed)</div>
-          <div className="viewport-content video-matrix">
-            {liveOutputUrl ? (
-              <img src={liveOutputUrl} alt="Live Telemetry" className="media-render" />
-            ) : (
-              <div className="placeholder-text">Awaiting pipeline...</div>
-            )}
-          </div>
-        </section>
+      {/* Section: Raw Live Video (Half Width) */}
+      <section className="viewport-container raw-live-view small-view">
+        <div className="viewport-header">Raw Live Video</div>
+        <div className="viewport-content">
+          <video ref={videoRef} className="media-render" playsInline muted />
+        </div>
+      </section>
 
-      </aside>
+      {/* Section: Output given by backend (Expanded) */}
+      <section className="viewport-container backend-output-large expanded-view">
+        <div className="viewport-header">Output</div>
+        <div className="viewport-content">
+          {processedImageUrl || processedVideoUrl ? (
+            fileContext.file?.type.startsWith('video/') ? 
+            <video src={processedVideoUrl} controls className="media-render" /> :
+            <img src={processedImageUrl} className="media-render" alt="Output" />
+          ) : <div className="placeholder-text">Awaiting Analysis...</div>}
+        </div>
+      </section>
+
+      {/* Section: Output of the live video (Expanded) */}
+      <section className="viewport-container live-telemetry-large expanded-view">
+        <div className="viewport-header">Live Output</div>
+        <div className="viewport-content">
+          {liveOutputUrl ? (
+            <img src={liveOutputUrl} alt="Live Telemetry" className="media-render" />
+          ) : <div className="placeholder-text">Pipeline Offline</div>}
+        </div>
+      </section>
+
+      <canvas ref={canvasRef} style={{ display: 'none' }} />
     </div>
   );
 };
