@@ -1,10 +1,5 @@
-<<<<<<< HEAD
-from fastapi import FastAPI, UploadFile, File, Response
-from fastapi.responses import FileResponse
-=======
 from fastapi import FastAPI, UploadFile, File, WebSocket, WebSocketDisconnect
 from fastapi.responses import FileResponse, Response
->>>>>>> e7ddf90ae484aa62e7a51d4132e86f0e305a9bee
 from fastapi.middleware.cors import CORSMiddleware
 from ultralytics import YOLO
 import ray
