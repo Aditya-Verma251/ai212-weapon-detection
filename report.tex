@@ -1,0 +1,277 @@
+\documentclass[12pt, a4paper]{report}
+
+% Packages for formatting
+\usepackage[left=1.5in,right=1in,top=1in,bottom=1in]{geometry}
+\usepackage{setspace}
+\usepackage{mathptmx} % Times Roman font
+\usepackage{titlesec}
+\usepackage{tocloft}
+\usepackage{graphicx}
+
+% 1.5 Line Spacing
+\onehalfspacing
+
+% Heading Formats
+% Chapter: 15pt, Bold, All Caps
+\titleformat{\chapter}[hang]
+  {\fontsize{15pt}{18pt}\selectfont\bfseries\MakeUppercase}
+  {\thechapter.}
+  {1em}
+  {}
+  
+% Section: 12pt, Bold, All Caps
+\titleformat{\section}
+  {\fontsize{12pt}{15pt}\selectfont\bfseries\MakeUppercase}
+  {\thesection}
+  {1em}
+  {}
+
+% Subsection: 12pt, Bold, Title Case
+\titleformat{\subsection}
+  {\fontsize{12pt}{15pt}\selectfont\bfseries}
+  {\thesubsection}
+  {1em}
+  {}
+
+\begin{document}
+
+% --------------------------------------------------------
+% COVER PAGE (No Page Number)
+% --------------------------------------------------------
+\thispagestyle{empty}
+\begin{center}
+    \vspace*{1in}
+    
+    {\fontsize{15pt}{18pt}\selectfont\bfseries AI BASED WEAPON DETECTION SYSTEM \par}
+    
+    \vspace{1.5in}
+    
+    {\fontsize{12pt}{15pt}\selectfont Project Report \par}
+    \vspace{0.2in}
+    {\fontsize{12pt}{15pt}\selectfont submitted \par}
+    \vspace{0.2in}
+    {\fontsize{12pt}{15pt}\selectfont by \par}
+    
+    \vspace{1in}
+    
+    {\fontsize{12pt}{15pt}\selectfont \textbf{Aditya Kumar Verma and Harsh Yadav} \par}
+    {\fontsize{12pt}{15pt}\selectfont (2024AIB1002 and 2024AIB1006 respectively) \par}
+    
+    \vspace{0.5in}
+
+    \includegraphics[width=2in]{report/logo.png}
+
+    \vspace{0.5in}
+    
+    {\fontsize{12pt}{15pt}\selectfont DEPARTMENT OF AIDE \par}
+    \vspace{0.2in}
+    {\fontsize{12pt}{15pt}\selectfont IIT ROPAR \par}
+    \vspace{0.2in}
+    {\fontsize{12pt}{15pt}\selectfont May, 2026 \par}
+    
+\end{center}
+
+\newpage
+
+% --------------------------------------------------------
+% FRONT MATTER (Roman Numerals)
+% --------------------------------------------------------
+\pagenumbering{roman}
+
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+In an era of increasing security concerns, the demand for automated, real-time threat detection systems has grown exponentially. This project presents a state-of-the-art, end-to-end artificial intelligence framework for real-time weapon detection. Leveraging the YOLOv8 Nano architecture—optimized for high-throughput and low-latency inference—the system is capable of identifying multiple threat classes with high precision, including pistols, rifles, grenades, knives, and missiles. The model was trained on a comprehensive, multi-class dataset sourced from Roboflow. To maximize computational efficiency, the training pipeline was divided into two distinct phases, strategically utilizing the Ray framework for distributed processing and scalable workload management before transitioning to a secondary optimization phase. The deployment architecture features a robust React-based frontend for seamless user interaction, integrated with a high-performance FastAPI backend. This distributed microservices approach ensures asynchronous inference and scalable real-time monitoring, providing a highly deployable, edge-friendly solution for modern intelligent surveillance systems.
+
+\newpage
+\tableofcontents
+
+\newpage
+\listoftables
+\addcontentsline{toc}{chapter}{List of Tables}
+
+\newpage
+\listoffigures
+\addcontentsline{toc}{chapter}{List of Figures}
+
+\newpage
+\chapter*{List of Symbols, Abbreviations and Nomenclature}
+\addcontentsline{toc}{chapter}{List of Symbols, Abbreviations and Nomenclature}
+[List goes here]
+
+\newpage
+
+% --------------------------------------------------------
+% MAIN CONTENT (Arabic Numerals)
+% --------------------------------------------------------
+\pagenumbering{arabic}
+
+\chapter{Introductory Chapter}
+\section{Background}
+The rapid evolution of deep learning and computer vision has revolutionized the field of intelligent automated surveillance. Traditional security protocols rely heavily on manual human monitoring, which is often constrained by fatigue, human error, and delayed response times. With the advent of convolutional neural networks (CNNs) and real-time object detection paradigms, it is now possible to deploy automated systems capable of analyzing video feeds with superhuman speed and consistency. Among these state-of-the-art architectures, the YOLO (You Only Look Once) family of models has emerged as the industry standard for real-time inference. Specifically, YOLOv8 Nano offers an unprecedented balance of computational efficiency and mean Average Precision (mAP), making it an ideal candidate for rapid threat assessment without requiring massive computational overhead.
+\subsection{Motivation}
+The primary motivation for this project is to bridge the gap between advanced deep learning algorithms and scalable, real-world deployment. While many weapon detection models exist in isolated research environments or Jupyter Notebooks, there is a critical need for full-stack, production-ready systems. By engineering an end-to-end solution, this project aims to provide a robust framework that not only detects critical threats—such as firearms and explosives—with high accuracy but also serves these predictions through a modern, scalable web architecture.
+
+\section{Project Objectives and Scope}
+This project focuses on the development, training, and full-stack deployment of an AI-driven weapon detection pipeline. The core objectives include:
+\begin{itemize}
+    \item \textbf{Model Development:} Training a highly optimized YOLOv8 Nano model on a diverse, multi-class Roboflow dataset to accurately classify distinct threat categories (pistols, rifles, grenades, knives, and missiles).
+    \item \textbf{Distributed Training Strategy:} Implementing a novel two-phase training methodology, utilizing the Ray framework for distributed computational efficiency.
+    \item \textbf{Scalable Backend Architecture:} Engineering a high-throughput backend API using FastAPI to handle asynchronous inference requests.
+    \item \textbf{Interactive Frontend Deployment:} Developing a responsive React user interface that provides intuitive, real-time visualization of the detection bounding boxes and system analytics.
+\end{itemize}
+
+\chapter{Related Work}
+
+\section{Evolution of Object Detection Models}
+The landscape of computer vision and automated threat detection has undergone significant transformations over the past decade. Early approaches to object detection relied heavily on two-stage frameworks, most notably the R-CNN (Region-based Convolutional Neural Network) family. While these models achieved high localization accuracy by generating region proposals before classification, their high computational overhead and significant inference latency made them fundamentally unsuitable for real-time video surveillance applications.
+
+\section{Single-Stage Detectors and the YOLO Paradigm}
+To address the latency bottlenecks of two-stage architectures, single-stage detectors such as SSD (Single Shot MultiBox Detector) and the YOLO architectures were introduced. These models frame object detection as a single regression problem, simultaneously predicting bounding boxes and class probabilities across the entire image. Earlier iterations of YOLO drastically improved inference speeds but often struggled with detecting smaller objects or distinguishing heavily occluded weapons in complex environments.
+
+\section{Justification for Proposed Architecture}
+While state-of-the-art enterprise models utilize massive, computationally expensive backbones to achieve maximum mean Average Precision (mAP), these models cannot be easily deployed on standard hardware or web-based interfaces without significant lag. This project intentionally diverges from heavy-compute models by adopting the \textbf{YOLOv8 Nano} architecture. By pairing a lightweight, highly efficient inference engine with a scalable FastAPI and Ray-distributed backend, this system prioritizes ultra-low latency, high-throughput asynchronous processing, and accessibility via a React web client. This approach bridges the gap between theoretical deep learning models and practical, deployable software engineering.
+
+\chapter{Theoretical Analysis}
+
+\section{YOLOv8 Architectural Framework}
+The YOLOv8 (You Only Look Once version 8) architecture is a cutting-edge single-stage object detection model designed for high-performance real-time inference. Unlike traditional detectors that utilize region proposal networks, YOLOv8 frames detection as a regression problem, processing the entire image in a single forward pass. The architecture is composed of three primary components: the \textbf{Backbone} (for feature extraction), the \textbf{Neck} (for feature fusion), and the \textbf{Head} (for final prediction).
+
+\section{The C2f Module and Feature Extraction}
+One of the most significant theoretical advancements in YOLOv8 is the introduction of the \textbf{C2f (Cross-Stage Partial with 2 Convolutions)} module. 
+\begin{itemize}
+    \item \textbf{Feature Reuse:} The C2f module improves upon the previous C3 module by allowing for richer gradient flow and enhanced feature reuse.
+    \item \textbf{Bottleneck Integration:} By concatenating the outputs of all bottleneck layers rather than just the final one, the model captures more diverse spatial information, which is critical for identifying small-scale weapon features like triggers or knife edges.
+    \item \textbf{Backbone Efficiency:} The backbone utilizes a modified CSPDarknet53 structure, which optimizes the balance between parameter count and receptive field depth.
+\end{itemize}
+
+\section{Anchor-Free Detection Paradigm}
+YOLOv8 departs from earlier versions by adopting an \textbf{Anchor-Free} detection strategy. Traditional models used predefined anchor boxes of fixed aspect ratios, which often required manual tuning for specific datasets. 
+\begin{itemize}
+    \item \textbf{Center-Point Prediction:} YOLOv8 treats object detection as a center-point prediction problem, directly regressing the distance from the center to the bounding box edges.
+    \item \textbf{Generalization:} This approach significantly improves the model's ability to generalize to custom datasets (such as the Roboflow weapon dataset) and reduces the complexity of Non-Maximum Suppression (NMS).
+\end{itemize}
+
+\section{Decoupled Head and Loss Functions}
+The "Head" of the network has been updated to a \textbf{Decoupled Structure}, meaning the classification and regression tasks are handled by separate branches. This prevents the features required for identifying a "Grenade" from interfering with the geometric features required to draw its bounding box.
+
+The model optimizes its weights using a composite loss function:
+\begin{enumerate}
+    \item \textbf{Binary Cross-Entropy (BCE) Loss:} Used for the classification branch to predict class probabilities.
+    \item \textbf{Complete IoU (CIoU) Loss:} Used for bounding box regression, accounting for the overlap area, center point distance, and aspect ratio.
+    \item \textbf{Distributional Focal Loss (DFL):} Introduced to handle the probabilities of bounding box boundaries, particularly in cases where edges are blurred or partially occluded.
+\end{enumerate}
+
+\section{Distributed Training with Ray}
+The integration of the \textbf{Ray framework} provides a theoretical advantage in distributed workload management. By abstracting the computational resources, Ray allows the training pipeline to scale horizontally across multiple workers. This distributed approach ensures that the model can be trained on larger datasets or fine-tuned with hyperparameter optimization without being bottlenecked by single-node hardware limitations.
+
+\chapter{Experimental Setup and Tools}
+
+\section{Hardware Configuration}
+The training and deployment phases were conducted on a localized workstation optimized for deep learning workloads. The primary hardware specifications include:
+\begin{itemize}
+    \item \textbf{GPU:} NVIDIA GeForce RTX 4050 (6GB GDDR6 VRAM)
+    \item \textbf{Processor:} High-performance multi-core CPU architecture
+    \item \textbf{Memory:} 16GB DDR4 RAM
+    \item \textbf{Storage:} NVMe SSD for high-speed data throughput during training
+\end{itemize}
+
+\section{Software Stack}
+The system architecture was built using a modern, decoupled software stack to ensure scalability and ease of maintenance:
+\begin{itemize}
+    \item \textbf{Environment:} Python 3.10+
+    \item \textbf{Deep Learning Framework:} Ultralytics YOLOv8
+    \item \textbf{Distributed Computing:} Ray Train (for compute distribution and resource management)
+    \item \textbf{Backend API:} FastAPI (Asynchronous Server Gateway Interface)
+    \item \textbf{Frontend Interface:} React.js (Component-based UI library)
+    \item \textbf{Development Tools:} CUDA 11.x/12.x for GPU acceleration
+\end{itemize}
+
+\section{Dataset Composition}
+The model was trained on a multi-class weapon dataset curated via Roboflow. The data was partitioned to ensure robust evaluation and prevent overfitting:
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|r|}
+\hline
+\textbf{Dataset Partition} & \textbf{Number of Images} \\ \hline
+Training Set               & 7,182                     \\ \hline
+Validation Set             & 1,815                     \\ \hline
+Testing Set                & 636                       \\ \hline
+\textbf{Total}             & \textbf{9,633}            \\ \hline
+\end{tabular}
+\caption{Dataset distribution for weapon detection.}
+\end{table}
+
+\section{Two-Phase Training Methodology}
+To optimize the utilization of the RTX 4050, a strategic two-phase training approach was implemented:
+\begin{enumerate}
+    \item \textbf{Phase 1 (Distributed Training):} Utilized \textbf{Ray Train} to distribute the computational load. This phase focused on high-level feature extraction and establishing a baseline weight distribution across the network.
+    \item \textbf{Phase 2 (Fine-tuning):} Conducted without the Ray abstraction layer to allow for granular control over hyperparameter convergence and localized optimization on the final layers of the YOLOv8 Nano backbone.
+\end{enumerate}
+All images were resized to a uniform resolution of $640 \times 640$ pixels to maintain a balance between detection accuracy and inference speed.
+
+\chapter{Experimental Results}
+
+\section{Evaluation Metrics}
+The performance of the YOLOv8 Nano model was evaluated using standard computer vision metrics extracted from the training logs.  These include Precision (P), Recall (R), and mean Average Precision (mAP) at various Intersection over Union (IoU) thresholds. 
+
+\section{Model Performance Summary}
+Upon completion of the 10-epoch training cycle, the model achieved a high degree of classification accuracy and localization precision.  The final aggregate metrics for the weapon detection system are summarized in the table below:
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|l|c|}
+\hline
+\textbf{Metric} & \textbf{Final Value} \\ \hline
+Precision (B) & 0.7890 (78.9\%) \\ \hline
+Recall (B) & 0.6560 (65.6\%) \\ \hline
+mAP50 (B) & 0.7359 (73.6\%) \\ \hline
+mAP50-95 (B) & 0.5123 (51.2\%) \\ \hline
+\end{tabular}
+\caption{Final aggregate model performance after 10 epochs. }
+\end{table}
+
+\section{Training Progression and Convergence}
+The training logs indicate a steady improvement in the model's ability to generalize.  While there was minor fluctuation in the mid-training phase (Epoch 5), the model successfully converged by Epoch 10, showing a marked increase in both Precision and mAP50. 
+
+\begin{table}[h]
+\centering
+\begin{tabular}{|c|c|c|c|c|}
+\hline
+\textbf{Epoch} & \textbf{Precision} & \textbf{Recall} & \textbf{mAP50} & \textbf{mAP50-95} \\ \hline
+1 & 0.7502 & 0.5998 & 0.6686 & 0.4501 \\ \hline
+5 & 0.7312 & 0.5497 & 0.6336 & 0.4355 \\ \hline
+10 & 0.7890 & 0.6560 & 0.7359 & 0.5123 \\ \hline
+\end{tabular}
+\caption{Model metric progression at key training intervals. }
+\end{table}
+
+\section{Inference and Deployment Testing}
+By utilizing the YOLOv8 Nano variant, the system achieved exceptionally low inference times. Average processing time per frame was recorded at approximately 152.4ms during the final epoch of validation, ensuring the system is capable of near real-time performance when deployed via the FastAPI backend and React frontend.
+
+\chapter{Summary and Conclusions}
+
+This project successfully demonstrated the development and deployment of a full-stack, AI-driven weapon detection system. By leveraging the YOLOv8 Nano architecture, we achieved a robust balance between detection accuracy and computational efficiency. 
+
+The integration of Ray for distributed training proved effective in managing compute resources, while the combination of a FastAPI backend and a React frontend provided a seamless, scalable interface for real-time monitoring. The final results, yielding an mAP50 of 73.6\%, confirm that the system is highly capable of identifying various threat classes (pistols, rifles, grenades, etc.) in a controlled environment.  In conclusion, this project provides a viable framework for automated surveillance that can significantly reduce human error in security monitoring.
+
+\chapter{Future Scope}
+
+The current implementation of the weapon detection system serves as a proof-of-concept for automated surveillance. However, there are several avenues for further development to transition this system into a production-ready security solution:
+
+\begin{itemize}
+    \item \textbf{Large-Scale Infrastructure Deployment:} Future iterations will focus on scaling the system from a single-node setup to a distributed network of multiple cameras across a large facility, utilizing centralized cloud processing or decentralized edge computing.
+    \item \textbf{Real-Time Optimization:} To enhance real-time usability, the system can be optimized using hardware-specific acceleration such as TensorRT for NVIDIA GPUs or OpenVINO for Intel processors, further reducing inference latency for high-frame-rate video feeds.
+    \item \textbf{Improved Detection Accuracy:} Accuracy can be augmented by implementing an active learning loop where the system identifies low-confidence detections and automatically flags them for manual labeling, thereby continuously expanding and refining the training dataset.
+    \item \textbf{Integration with Alarm Protocols:} Future work includes developing a middleware layer that connects the detection backend to physical security systems, enabling automated lockdowns or instant law enforcement notifications upon high-confidence weapon identification.
+\end{itemize}
+
+\chapter*{References}
+\addcontentsline{toc}{chapter}{References}
+
+No external literature or prior publications were formally cited in the preparation of this project report. All methodologies, architectural designs, and experimental procedures described herein were developed and implemented by the project authors based on the provided technical documentation of the utilized software frameworks.
+\begin{thebibliography}{9}
+\bibitem{sample} 
+Only Here, \textit{Because required by}, The Given Format, 2026.
+\end{thebibliography}
+
+\end{document}

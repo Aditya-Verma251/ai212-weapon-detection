@@ -1,0 +1,31 @@
+\contentsline {chapter}{Abstract}{i}{}%
+\contentsline {chapter}{List of Tables}{iv}{}%
+\contentsline {chapter}{List of Figures}{v}{}%
+\contentsline {chapter}{List of Symbols, Abbreviations and Nomenclature}{vi}{}%
+\contentsline {chapter}{\numberline {1}Introductory Chapter}{1}{}%
+\contentsline {section}{\numberline {1.1}Background}{1}{}%
+\contentsline {subsection}{\numberline {1.1.1}Motivation}{1}{}%
+\contentsline {section}{\numberline {1.2}Project Objectives and Scope}{1}{}%
+\contentsline {chapter}{\numberline {2}Related Work}{3}{}%
+\contentsline {section}{\numberline {2.1}Evolution of Object Detection Models}{3}{}%
+\contentsline {section}{\numberline {2.2}Single-Stage Detectors and the YOLO Paradigm}{3}{}%
+\contentsline {section}{\numberline {2.3}Justification for Proposed Architecture}{3}{}%
+\contentsline {chapter}{\numberline {3}Theoretical Analysis}{4}{}%
+\contentsline {section}{\numberline {3.1}YOLOv8 Architectural Framework}{4}{}%
+\contentsline {section}{\numberline {3.2}The C2f Module and Feature Extraction}{4}{}%
+\contentsline {section}{\numberline {3.3}Anchor-Free Detection Paradigm}{4}{}%
+\contentsline {section}{\numberline {3.4}Decoupled Head and Loss Functions}{5}{}%
+\contentsline {section}{\numberline {3.5}Distributed Training with Ray}{5}{}%
+\contentsline {chapter}{\numberline {4}Experimental Setup and Tools}{6}{}%
+\contentsline {section}{\numberline {4.1}Hardware Configuration}{6}{}%
+\contentsline {section}{\numberline {4.2}Software Stack}{6}{}%
+\contentsline {section}{\numberline {4.3}Dataset Composition}{6}{}%
+\contentsline {section}{\numberline {4.4}Two-Phase Training Methodology}{7}{}%
+\contentsline {chapter}{\numberline {5}Experimental Results}{8}{}%
+\contentsline {section}{\numberline {5.1}Evaluation Metrics}{8}{}%
+\contentsline {section}{\numberline {5.2}Model Performance Summary}{8}{}%
+\contentsline {section}{\numberline {5.3}Training Progression and Convergence}{8}{}%
+\contentsline {section}{\numberline {5.4}Inference and Deployment Testing}{9}{}%
+\contentsline {chapter}{\numberline {6}Summary and Conclusions}{10}{}%
+\contentsline {chapter}{\numberline {7}Future Scope}{11}{}%
+\contentsline {chapter}{References}{12}{}%
