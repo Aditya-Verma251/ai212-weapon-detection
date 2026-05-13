@@ -5,21 +5,19 @@ const App = () => {
   const [fileContext, setFileContext] = useState({ file: null, previewUrl: null });
   const [uploadState, setUploadState] = useState('idle');
   const [processedVideoUrl, setProcessedVideoUrl] = useState(null);
-  const [processedImageUrl, setProcessedImageUrl] = useState(null); // Added state for processed images
+  const [processedImageUrl, setProcessedImageUrl] = useState(null); 
   
   const [isStreaming, setIsStreaming] = useState(false);
   const [liveOutputUrl, setLiveOutputUrl] = useState(null);
   
   const fileInputRef = useRef(null);
   
-  // Video and Streaming Refs
   const videoRef = useRef(null);
   const canvasRef = useRef(null);
   const streamRef = useRef(null);
   const wsRef = useRef(null);
   const streamIntervalRef = useRef(null);
 
-  // --- Main Panel Handlers ---
   const triggerFileSelection = () => fileInputRef.current?.click();
 
   const handleSystemBrowse = useCallback((e) => {
@@ -29,7 +27,7 @@ const App = () => {
       setFileContext({ file: selected, previewUrl });
       setUploadState('idle');
       setProcessedVideoUrl(null);
-      setProcessedImageUrl(null); // Reset image state on new upload
+      setProcessedImageUrl(null); 
     }
   }, []);
 
@@ -56,7 +54,6 @@ const App = () => {
         const url = URL.createObjectURL(blob);
         setProcessedVideoUrl(url);
       } else {
-        // Fix: Now expects an image blob instead of JSON
         const blob = await response.blob();
         const url = URL.createObjectURL(blob);
         setProcessedImageUrl(url);
@@ -69,7 +66,6 @@ const App = () => {
     }
   };
 
-  // --- Sidebar Handlers (WebSocket Live Stream) ---
   const toggleMediaStream = async () => {
     if (isStreaming) {
       clearInterval(streamIntervalRef.current);
@@ -128,11 +124,8 @@ const App = () => {
   return (
     <div className="telemetry-dashboard">
       <header className="title-node">AI212 Project : Weapon Detection System</header>
-
-      {/* Section: Browse & Analyse */}
       <div className="control-section browse-analyze-controls">
         <button className="btn-primary" onClick={triggerFileSelection}>Browse ↑</button>
-        {/* Hidden input to remove "No file chosen" text */}
         <input 
           type="file" 
           ref={fileInputRef} 
@@ -153,7 +146,6 @@ const App = () => {
         </div>
       </div>
 
-      {/* Section: Raw Input Preview (Half Width) */}
       <section className="viewport-container raw-input-view small-view">
         <div className="viewport-header">Raw Input</div>
         <div className="viewport-content">
@@ -163,14 +155,12 @@ const App = () => {
         </div>
       </section>
 
-      {/* Section: Camera Connection */}
       <div className="camera-toggle-node">
         <button className="btn-outline btn-black-text" onClick={toggleMediaStream}>
           {isStreaming ? 'Disconnect' : 'Connect Camera'}
         </button>
       </div>
 
-      {/* Section: Raw Live Video (Half Width) */}
       <section className="viewport-container raw-live-view small-view">
         <div className="viewport-header">Raw Live Video</div>
         <div className="viewport-content">
@@ -178,7 +168,6 @@ const App = () => {
         </div>
       </section>
 
-      {/* Section: Output given by backend (Expanded) */}
       <section className="viewport-container backend-output-large expanded-view">
         <div className="viewport-header">Output</div>
         <div className="viewport-content">
@@ -190,7 +179,6 @@ const App = () => {
         </div>
       </section>
 
-      {/* Section: Output of the live video (Expanded) */}
       <section className="viewport-container live-telemetry-large expanded-view">
         <div className="viewport-header">Live Output</div>
         <div className="viewport-content">

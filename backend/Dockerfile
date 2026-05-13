@@ -11,6 +11,8 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY main.py .
 COPY best.pt .
 COPY yolo26n.pt .
+COPY models ./models
+COPY . .
 
 EXPOSE 8000
 
