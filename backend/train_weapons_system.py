@@ -8,7 +8,7 @@ def train_func(config):
     model = YOLO("yolov8n.pt") 
     model.train(
         data=config["data_path"],
-        epochs=30,
+        epochs=20,
         imgsz=640,
         batch=8,
         workers=0,
